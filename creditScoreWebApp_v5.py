@@ -13,26 +13,60 @@ def convert_df(df):
     # IMPORTANT: Cache the conversion to prevent computation on every rerun
     return df.to_csv().encode('utf-8')
 
+def fnames():
+    if st.session_state.selectCountry != 'None':
+        if st.session_state.noint:
+            st.session_state.fnR = st.session_state.fnR[:-4]+'_noint'+st.session_state.fnR[-4:]
+            st.session_state.fnP = st.session_state.fnP[:-4] + '_noint' + st.session_state.fnP[-4:]
+            st.session_state.fnI = st.session_state.fnI[:-4] + '_noint' + st.session_state.fnI[-4:]
+            st.session_state.fnC = st.session_state.fnC[:-4] + '_noint' + st.session_state.fnC[-4:]
+        else:
+            st.session_state.fnR = st.session_state.fnR[:-10] + st.session_state.fnR[-4:]
+            st.session_state.fnP = st.session_state.fnP[:-10] + st.session_state.fnP[-4:]
+            st.session_state.fnI = st.session_state.fnI[:-10] + st.session_state.fnI[-4:]
+            st.session_state.fnC = st.session_state.fnC[:-10] + st.session_state.fnC[-4:]
+        st.session_state.reload = True
+
+def fnamesInit():
+    if st.session_state.selectCountry != 'None':
+        if st.session_state.noint:
+            st.session_state.fnR = 'data/' + st.session_state.selectCountry + '/' + st.session_state.selectCountry + '_Remoteness_noint.csv'
+            st.session_state.fnP = 'data/' + st.session_state.selectCountry + '/' + st.session_state.selectCountry + '_Poverty_noint.csv'
+            st.session_state.fnI = 'data/' + st.session_state.selectCountry + '/' + st.session_state.selectCountry + '_Impact_noint.csv'
+            st.session_state.fnC = 'data/' + st.session_state.selectCountry + '/' + st.session_state.selectCountry + '_Connectivity_noint.csv'
+        else:
+            st.session_state.fnR = 'data/' + st.session_state.selectCountry + '/' + st.session_state.selectCountry + '_Remoteness.csv'
+            st.session_state.fnP = 'data/' + st.session_state.selectCountry + '/' + st.session_state.selectCountry + '_Poverty.csv'
+            st.session_state.fnI = 'data/' + st.session_state.selectCountry + '/' + st.session_state.selectCountry + '_Impact.csv'
+            st.session_state.fnC = 'data/' + st.session_state.selectCountry + '/' + st.session_state.selectCountry + '_Connectivity.csv'
+        st.session_state.reload = True
+    else:
+        st.session_state.reload = False
+
 #@st.experimental_singleton()
 def load_and_calculate():
-    if st.session_state.selectCountry!='None' and st.session_state.oldCountry != st.session_state.selectCountry:
+    if st.session_state.reload:#st.session_state.selectCountry!='None' and st.session_state.oldCountry != st.session_state.selectCountry:
+        st.session_state.reload = False
         st.session_state.oldCountry = st.session_state.selectCountry
-        fnR = 'data/'+st.session_state.selectCountry+'/'+st.session_state.selectCountry+'_Remoteness.csv'
-        fnP = 'data/' + st.session_state.selectCountry + '/' + st.session_state.selectCountry + '_Poverty.csv'
-        fnI = 'data/' + st.session_state.selectCountry + '/' + st.session_state.selectCountry + '_Impact.csv'
-        fnC = 'data/' + st.session_state.selectCountry + '/' + st.session_state.selectCountry + '_Connectivity.csv'
-        #fnSC = 'data/' + st.session_state.selectCountry + '/' + st.session_state.selectCountry + '_School_Connectivity.csv'
-        st.session_state.df_remoteness = pd.read_csv(fnR)
-        st.session_state.df_poverty = pd.read_csv(fnP)
-        st.session_state.df_impact = pd.read_csv(fnI)
-        st.session_state.df_connectivity = pd.read_csv(fnC)
-        #st.session_state.df_school_connectivity = pd.read_csv(fnSC)
+        #fnR = 'data/'+st.session_state.selectCountry+'/'+st.session_state.selectCountry+'_Remoteness.csv'
+        #fnP = 'data/' + st.session_state.selectCountry + '/' + st.session_state.selectCountry + '_Poverty.csv'
+        #fnI = 'data/' + st.session_state.selectCountry + '/' + st.session_state.selectCountry + '_Impact.csv'
+        #fnC = 'data/' + st.session_state.selectCountry + '/' + st.session_state.selectCountry + '_Connectivity.csv'
+        st.session_state.df_remoteness = pd.read_csv(st.session_state.fnR)
+        st.session_state.df_poverty = pd.read_csv(st.session_state.fnP)
+        st.session_state.df_impact = pd.read_csv(st.session_state.fnI)
+        st.session_state.df_connectivity = pd.read_csv(st.session_state.fnC)
 
         st.session_state.df_remoteness.drop(columns=st.session_state.df_remoteness.columns[0], axis=1, inplace=True)
         st.session_state.df_poverty.drop(columns=st.session_state.df_poverty.columns[0], axis=1, inplace=True)
         st.session_state.df_impact.drop(columns=st.session_state.df_impact.columns[0], axis=1, inplace=True)
         st.session_state.df_connectivity.drop(columns=st.session_state.df_connectivity.columns[0], axis=1, inplace=True)
-        #st.session_state.df_school_connectivity.drop(columns=st.session_state.df_school_connectivity.columns[0], axis=1, inplace=True)
+
+        internets = st.session_state.df_remoteness['bin_internet_availability'].unique()
+        st.session_state.all_internet = False
+        if len(internets)==1:
+            if internets[0]==1:
+                st.session_state.all_internet = True
 
         copycols = list(st.session_state.df_remoteness.columns[:4])
         st.session_state.df_school_dup = st.session_state.df_remoteness[copycols].copy()
@@ -223,6 +257,12 @@ if 'attributesC' not in st.session_state:
     st.session_state.attributesC = []
 if 'oldCountry' not in st.session_state:
     st.session_state.oldCountry = 'None'
+if 'reload' not in st.session_state:
+    st.session_state.reload = False
+if 'noint' not in st.session_state:
+    st.session_state.noint = False
+if 'all_internet' not in st.session_state:
+    st.session_state.all_internet = False
 ###############################
 
 #######Side bar Categories#########
@@ -237,7 +277,7 @@ with st.sidebar:
 ######Country selectBox#############
 country = st.selectbox(
     'Choose a Country',
-    ('None','Mongolia', 'Botswana', 'Nigeria'), key='selectCountry')#,on_change=load_and_calculate())
+    ('None','Mongolia', 'Botswana'), key='selectCountry',on_change=fnamesInit)
 ###############################
 
 ######All these only happen if I select a country#########
@@ -262,6 +302,12 @@ if country and country!='None':
 
     ############################
 
+    ######checker###############
+
+    if st.session_state.all_internet:
+        noint = st.checkbox('Only schools without internet',key = 'noint',disabled=True,on_change=fnames)
+    else:
+        noint = st.checkbox('Only schools without internet', key='noint', on_change=fnames)
 
     ######2 Columns#######
     col1, col2 = st.columns(2)
@@ -360,7 +406,7 @@ if country and country!='None':
                         elevationScale=50000,
                         get_fill_color=["bin_internet_availability > 0 ? 0 : 255","bin_internet_availability > 0 ? 255 : 0",0],
                         #get_fill_color=[255, 140, option, 140],
-                        getElevation=option,
+                        getElevation=option+'*4',
                         pickable=True,
                         auto_highlight=True,
                     ),
@@ -423,7 +469,7 @@ if country and country!='None':
                             elevationScale=50000,
 			    get_fill_color=["bin_internet_availability > 0 ? 0 : 255","bin_internet_availability > 0 ? 255 : 0",0],
                             #get_fill_color=[255, 140, option2, 140],
-                            getElevation=option2,
+                            getElevation=option2+'*4',
                             pickable=True,
                             auto_highlight=True,
                         ),
@@ -449,7 +495,7 @@ if country and country!='None':
                             elevationScale=50000,
 			    get_fill_color=["bin_internet_availability > 0 ? 0 : 255","bin_internet_availability > 0 ? 255 : 0",0],
                             #get_fill_color=[255, 140, option2, 140],
-                            getElevation=option2,
+                            getElevation=option2+'*4',
                             pickable=True,
                             auto_highlight=True,
                         ),
@@ -475,7 +521,7 @@ if country and country!='None':
                             elevationScale=50000,
 			    get_fill_color=["bin_internet_availability > 0 ? 0 : 255","bin_internet_availability > 0 ? 255 : 0",0],
                             #get_fill_color=[255, 140, option2, 140],
-                            getElevation=option2,
+                            getElevation=option2+'*4',
                             pickable=True,
                             auto_highlight=True,
                         ),
@@ -501,7 +547,7 @@ if country and country!='None':
                             elevationScale=50000,
 			    get_fill_color=["bin_internet_availability > 0 ? 0 : 255","bin_internet_availability > 0 ? 255 : 0",0],
                             #get_fill_color=[255, 140, option2, 140],
-                            getElevation=option2,
+                            getElevation=option2+'*4',
                             pickable=True,
                             auto_highlight=True,
                         ),
