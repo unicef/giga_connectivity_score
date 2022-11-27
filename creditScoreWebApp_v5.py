@@ -277,7 +277,7 @@ with st.sidebar:
 ######Country selectBox#############
 country = st.selectbox(
     'Choose a Country',
-    ('None','Mongolia', 'Botswana'), key='selectCountry',on_change=fnamesInit)
+    ('None','Mongolia', 'Botswana','Rwanda'), key='selectCountry',on_change=fnamesInit)
 ###############################
 
 ######All these only happen if I select a country#########
